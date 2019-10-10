@@ -1,0 +1,5 @@
+import boto3
+ec2 = boto3.client('ce2')
+for i in ec2 describe_security_groups()['Securitygroups']:
+   if i[IpPermissionsEgress'][0]['IpRanges'][0]['CidIp'] == '0.0.0.0/0':
+     print(i['GroupName'])

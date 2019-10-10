@@ -1,0 +1,61 @@
+
+-hosts: all
+  tasks:
+    - name: add user
+      user:
+        name: dev_new
+        shell: /bin/bash
+        groups: wheel
+        append: yes
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+      become: true
+
+    - name: change port to 10022
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#Port'
+        line: Port 10022
+
+    - name: disallow root login and password authentication is disabled by default
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#PermitRootLogin'
+        line: PermitRootLogin no
+
+    - name: client alive to 600
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#ClientAliveCountMax'
+        line: ClientAliveCountMax 600
+
+    - name: client alive
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#ClientAliveInterval'
+        line: ClientAliveInterval 0
+
+    - name: listen on ipv4 only
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#AddressFamily any'
+        line: AddressFamily inet
+
+    - name: reload service sshd
+      systemd:
+        name: sshd
+        state: reloaded
+
+    - name: adding rule
+      ec2_group:
+        name: centos-sg
+        description: sg with rule descriptions
+        vpc_id: vpc-ejnkj3f
+        region: us-east-1
+        rules:
+          - proto: tcp
+            ports:
+            - 22
+          cidr_ip: 1.2.3.4/32
+          rule_desc: add ip to access ssh
